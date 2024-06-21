@@ -1,34 +1,50 @@
 use macroquad::prelude::*;
 
-const GRAVITY: f32 = -9.8;
+const GRAVITY: f32 = 9.8;
 const RADIUS: f32 = 30.0;
+const JUMP_VELOCITY: f32 = -4.5;
 
 struct Bird {
     height: f32,
-    x_position: f32,
     velocity: f32,
+}
+
+fn get_x_position() -> f32 {
+    screen_width() * 0.25
 }
 
 impl Bird {
     pub fn new() -> Bird {
         Bird {
             height: screen_height() / 2.0,
-            x_position: screen_width() * 0.25,
             velocity: 0.0,
         }
     }
 
     pub fn draw(&self) {
-        draw_circle(self.x_position, self.height, RADIUS, PURPLE);
+        draw_circle(get_x_position(), self.height, RADIUS, PURPLE);
     }
 
     pub fn update(&mut self) {
         self.height += self.velocity;
-        self.velocity -= get_frame_time() * GRAVITY;
+        self.velocity += get_frame_time() * GRAVITY;
+
+        if self.height > screen_height() {
+            self.reset();
+        }
+    }
+
+    pub fn jump(&mut self) {
+        self.velocity = JUMP_VELOCITY;
+    }
+
+    pub fn reset(&mut self) {
+        self.height = screen_height() / 2.0;
+        self.velocity = 0.0;
     }
 }
 
-#[macroquad::main("BasicShapes")]
+#[macroquad::main("Molly Bird")]
 async fn main() {
     let mut bird = Bird::new();
 
@@ -36,8 +52,12 @@ async fn main() {
         clear_background(WHITE);
         draw_text("MOLLY BIRD!", 20.0, 20.0, 30.0, DARKGRAY);
 
-        bird.draw();
+        if is_key_down(KeyCode::Space) {
+            bird.jump();
+        }
+
         bird.update();
+        bird.draw();
 
         next_frame().await
     }
