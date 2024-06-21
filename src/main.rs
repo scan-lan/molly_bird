@@ -7,6 +7,7 @@ const RADIUS: f32 = 25.0;
 const JUMP_VELOCITY: f32 = -4.5;
 const GAP_SIZE: f32 = (RADIUS + 7.) * 2.;
 const OBSTACLE_WIDTH: f32 = 30.0;
+const OBSTACLE_SPEED: f32 = 60.0;
 
 struct Bird {
     height: f32,
@@ -49,34 +50,33 @@ impl Bird {
 }
 
 struct Obstacle {
-    x_position: f32,
+    x_offset: f32,
     gap_height: f32,
 }
 
 impl Obstacle {
     pub fn new() -> Self {
         Obstacle {
-            x_position: screen_width() - 100.0,
+            x_offset: 50.,
             gap_height: rand::gen_range(40.0, screen_height() - 40.0),
         }
     }
 
     pub fn draw(&self) {
         let t_rect_h = self.gap_height - (GAP_SIZE / 2.0);
+        let x_pos = screen_width() + self.x_offset;
         // Top rectangle
-        draw_rectangle(self.x_position, 0.0, OBSTACLE_WIDTH, t_rect_h, DARKGRAY);
+        draw_rectangle(x_pos, 0.0, OBSTACLE_WIDTH, t_rect_h, DARKGRAY);
 
         let b_rect_start = self.gap_height + GAP_SIZE / 2.0;
         let b_rect_h = screen_height() - (self.gap_height + GAP_SIZE / 2.0);
 
         // Bottom rectangle
-        draw_rectangle(
-            self.x_position,
-            b_rect_start,
-            OBSTACLE_WIDTH,
-            b_rect_h,
-            DARKGRAY,
-        );
+        draw_rectangle(x_pos, b_rect_start, OBSTACLE_WIDTH, b_rect_h, DARKGRAY);
+    }
+
+    pub fn update(&mut self) {
+        self.x_offset -= get_frame_time() * OBSTACLE_SPEED;
     }
 }
 
@@ -97,9 +97,9 @@ async fn main() {
         bird.update();
         bird.draw();
 
-        obstacles.iter().for_each(|obstacle| {
+        obstacles.iter_mut().for_each(|obstacle| {
+            obstacle.update();
             obstacle.draw();
-            // obstacle.update();
         });
 
         next_frame().await
