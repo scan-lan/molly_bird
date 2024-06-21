@@ -5,7 +5,7 @@ use macroquad::{prelude::*, rand};
 const GRAVITY: f32 = 9.8;
 const RADIUS: f32 = 25.0;
 const JUMP_VELOCITY: f32 = -4.5;
-const GAP_SIZE: f32 = (RADIUS + 10.) * 2.;
+const GAP_SIZE: f32 = RADIUS * 4.;
 const OBSTACLE_WIDTH: f32 = 30.0;
 const OBSTACLE_SPEED: f32 = 250.0;
 
@@ -58,7 +58,7 @@ impl Obstacle {
     pub fn new() -> Self {
         Obstacle {
             x_offset: 10.,
-            gap_height: rand::gen_range(40.0, screen_height() - 40.0),
+            gap_height: rand::gen_range(GAP_SIZE, screen_height() - GAP_SIZE),
         }
     }
 
@@ -84,11 +84,47 @@ impl Obstacle {
     }
 }
 
+struct Obstacles {
+    list: VecDeque<Obstacle>,
+}
+
+const OBSTACLE_GAP: f32 = 300.;
+
+impl Obstacles {
+    pub fn new() -> Self {
+        let mut obstacles = VecDeque::new();
+        obstacles.push_back(Obstacle::new());
+
+        Self { list: obstacles }
+    }
+
+    pub fn draw(&self) {
+        self.list.iter().for_each(|obs| obs.draw())
+    }
+
+    pub fn update(&mut self) {
+        if let Some(front) = self.list.front() {
+            if front.x_offset <= -(screen_width()) {
+                self.list.pop_front();
+            }
+        }
+
+        if let Some(back) = self.list.back() {
+            if back.x_offset < -OBSTACLE_GAP {
+                self.list.push_back(Obstacle::new())
+            }
+        } else {
+            self.list.push_back(Obstacle::new())
+        }
+
+        self.list.iter_mut().for_each(|obs| obs.update())
+    }
+}
+
 #[macroquad::main("Molly Bird")]
 async fn main() {
     let mut bird = Bird::new();
-    let mut obstacles = VecDeque::new();
-    obstacles.push_back(Obstacle::new());
+    let mut obstacles = Obstacles::new();
 
     loop {
         clear_background(WHITE);
@@ -98,18 +134,13 @@ async fn main() {
             bird.jump();
         } else if is_key_down(KeyCode::R) {
             bird.reset();
-            obstacles.iter_mut().for_each(|obstacle| {
-                obstacle.reset();
-            });
-        }
+            // obstacles.update()
+        };
 
         bird.update();
+        obstacles.update();
         bird.draw();
-
-        obstacles.iter_mut().for_each(|obstacle| {
-            obstacle.update();
-            obstacle.draw();
-        });
+        obstacles.draw();
 
         next_frame().await
     }
