@@ -10,7 +10,7 @@ struct Bird {
 }
 
 fn get_x_position() -> f32 {
-    screen_width() * 0.25
+    screen_width() / 3.0
 }
 
 impl Bird {
