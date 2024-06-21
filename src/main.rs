@@ -5,9 +5,9 @@ use macroquad::{prelude::*, rand};
 const GRAVITY: f32 = 9.8;
 const RADIUS: f32 = 25.0;
 const JUMP_VELOCITY: f32 = -4.5;
-const GAP_SIZE: f32 = (RADIUS + 7.) * 2.;
+const GAP_SIZE: f32 = (RADIUS + 10.) * 2.;
 const OBSTACLE_WIDTH: f32 = 30.0;
-const OBSTACLE_SPEED: f32 = 60.0;
+const OBSTACLE_SPEED: f32 = 250.0;
 
 struct Bird {
     height: f32,
@@ -57,7 +57,7 @@ struct Obstacle {
 impl Obstacle {
     pub fn new() -> Self {
         Obstacle {
-            x_offset: 50.,
+            x_offset: 10.,
             gap_height: rand::gen_range(40.0, screen_height() - 40.0),
         }
     }
@@ -78,6 +78,10 @@ impl Obstacle {
     pub fn update(&mut self) {
         self.x_offset -= get_frame_time() * OBSTACLE_SPEED;
     }
+
+    pub fn reset(&mut self) {
+        self.x_offset = 10.
+    }
 }
 
 #[macroquad::main("Molly Bird")]
@@ -92,6 +96,11 @@ async fn main() {
 
         if is_key_down(KeyCode::Space) {
             bird.jump();
+        } else if is_key_down(KeyCode::R) {
+            bird.reset();
+            obstacles.iter_mut().for_each(|obstacle| {
+                obstacle.reset();
+            });
         }
 
         bird.update();
