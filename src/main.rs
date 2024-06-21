@@ -2,11 +2,12 @@ use std::collections::VecDeque;
 
 use macroquad::{prelude::*, rand};
 
-const GRAVITY: f32 = 9.8;
-const RADIUS: f32 = 25.0;
-const JUMP_VELOCITY: f32 = -4.5;
-const GAP_SIZE: f32 = RADIUS * 4.;
-const OBSTACLE_WIDTH: f32 = 30.0;
+const GRAVITY: f32 = 20.;
+const RADIUS: f32 = 20.0;
+const CIRCUMFERENCE: f32 = RADIUS * 2.;
+const JUMP_VELOCITY: f32 = -5.;
+const GAP_SIZE: f32 = CIRCUMFERENCE * 3.8;
+const OBSTACLE_WIDTH: f32 = CIRCUMFERENCE * 2.;
 const OBSTACLE_SPEED: f32 = 250.0;
 
 struct Bird {
@@ -104,7 +105,7 @@ impl Obstacles {
 
     pub fn update(&mut self) {
         if let Some(front) = self.list.front() {
-            if front.x_offset <= -(screen_width()) {
+            if front.x_offset <= -(screen_width() + OBSTACLE_WIDTH) {
                 self.list.pop_front();
             }
         }
