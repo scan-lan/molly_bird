@@ -6,7 +6,7 @@ module.exports = {
   markBreakingChangeMode: false,
   breaklineNumber: 80,
   breaklineChar: "|",
-  skipQuestions: ["footer", "footerPrefix", "confirmCommit"],
+  skipQuestions: ["footer", "scope", "footerPrefix", "confirmCommit"],
   allowEmptyIssuePrefix: true,
   confirmColorize: true,
   maxHeaderLength: 80,
