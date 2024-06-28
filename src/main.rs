@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 
 use macroquad::{prelude::*, rand};
+use miniquad::date::now;
 
 const GRAVITY: f32 = 20.;
 const RADIUS: f32 = 20.0;
@@ -128,42 +129,71 @@ impl Obstacles {
     }
 }
 
+const PAUSE_SIGN_WIDTH: f32 = 100.;
+const PAUSE_SIGN_HEIGHT: f32 = PAUSE_SIGN_WIDTH * 3.;
+const PAUSE_SIGN_GAP: f32 = PAUSE_SIGN_WIDTH * 0.7;
+
+fn draw_pause_menu() {
+    let middle_screen_x = screen_width() / 2.;
+    let middle_screen_y = screen_height() / 2. - PAUSE_SIGN_HEIGHT / 2.;
+
+    // Draw background
+    draw_rectangle(
+        0.,
+        0.,
+        screen_width(),
+        screen_height(),
+        color_u8!(255, 255, 255, 100),
+    );
+
+    // Draw pause symbol
+    draw_rectangle(
+        middle_screen_x - PAUSE_SIGN_WIDTH - PAUSE_SIGN_GAP / 2.,
+        middle_screen_y,
+        PAUSE_SIGN_WIDTH,
+        PAUSE_SIGN_HEIGHT,
+        DARKGRAY,
+    );
+    draw_rectangle(
+        middle_screen_x + PAUSE_SIGN_GAP / 2.,
+        middle_screen_y,
+        PAUSE_SIGN_WIDTH,
+        PAUSE_SIGN_HEIGHT,
+        DARKGRAY,
+    );
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Action {
     Jump,
     Reset,
     Pause,
-}
-
-fn handle_input() -> Option<Action> {
-    let keys = get_keys_down();
-
-    if keys.contains(&KeyCode::Space) || is_mouse_button_down(MouseButton::Left) {
-        Some(Action::Jump)
-    } else if keys.contains(&KeyCode::Escape) {
-        Some(Action::Pause)
-    } else if keys.contains(&KeyCode::R) {
-        Some(Action::Reset)
-    } else {
-        None
-    }
+    PauseReleased,
 }
 
 #[macroquad::main("Molly Bird")]
 async fn main() {
+    let bg_color = color_u8!(139, 184, 232, 255);
     let mut bird = Bird::new();
     let mut obstacles = Obstacles::new();
     let mut paused = true;
+    let mut can_pause = true;
+    let mut last_action = (None, now());
 
     loop {
         let fps = get_fps().to_string();
-        clear_background(WHITE);
-        draw_text("MOLLY BIRD!", 20.0, 20.0, 30.0, DARKGRAY);
-        draw_text(&fps, screen_width() - 100., 20., 30., DARKGRAY);
-
-        if let Some(action) = handle_input() {
+        clear_background(bg_color);
+        if let Some(action) = handle_input(last_action) {
+            last_action = (Some(action), now());
             match action {
                 Action::Jump => bird.jump(),
-                Action::Pause => paused = !paused,
+                Action::Pause => {
+                    if can_pause {
+                        paused = !paused;
+                        can_pause = false;
+                    }
+                }
+                Action::PauseReleased => can_pause = true,
                 Action::Reset => {
                     bird.reset();
                     // obstacles.reset()
@@ -171,11 +201,45 @@ async fn main() {
             };
         }
 
-        bird.update();
-        obstacles.update();
-        bird.draw();
-        obstacles.draw();
+        if !paused {
+            obstacles.tick();
+            bird.tick();
+        } else {
+            obstacles.draw();
+            bird.draw();
+            draw_pause_menu();
+        }
+
+        draw_text("MOLLY BIRD!", 20.0, 25.0, 40.0, PINK);
+        draw_text(&fps, screen_width() - 100., 25., 40., PINK);
 
         next_frame().await
+    }
+}
+
+fn handle_input(last_action: (Option<Action>, f64)) -> Option<Action> {
+    let keys = get_keys_down();
+
+    if is_key_released(KeyCode::Escape) {
+        return Some(Action::PauseReleased);
+    }
+
+    if keys.contains(&KeyCode::Space) || is_mouse_button_down(MouseButton::Left) {
+        Some(Action::Jump)
+    } else if keys.contains(&KeyCode::Escape) {
+        if last_action.0 != Some(Action::Pause) {
+            Some(Action::Pause)
+        } else {
+            let td = now() - last_action.1;
+            if td > 0.2 {
+                return Some(Action::Pause);
+            } else {
+                return None;
+            }
+        }
+    } else if keys.contains(&KeyCode::R) {
+        Some(Action::Reset)
+    } else {
+        None
     }
 }
