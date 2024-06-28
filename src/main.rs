@@ -1,15 +1,11 @@
 use std::collections::VecDeque;
 
 use macroquad::{prelude::*, rand};
-use miniquad::date::now;
 
 const GRAVITY: f32 = 20.;
 const RADIUS: f32 = 20.0;
 const CIRCUMFERENCE: f32 = RADIUS * 2.;
 const JUMP_VELOCITY: f32 = -5.;
-const GAP_SIZE: f32 = CIRCUMFERENCE * 3.8;
-const OBSTACLE_WIDTH: f32 = CIRCUMFERENCE * 2.;
-const OBSTACLE_SPEED: f32 = 250.0;
 
 fn get_x_position() -> f32 {
     screen_width() / 3.0
@@ -87,11 +83,14 @@ impl Obstacle {
     }
 }
 
+const OBSTACLE_GAP: f32 = 300.;
+const GAP_SIZE: f32 = CIRCUMFERENCE * 3.8;
+const OBSTACLE_WIDTH: f32 = CIRCUMFERENCE * 2.;
+const OBSTACLE_SPEED: f32 = 250.0;
+
 struct Obstacles {
     list: VecDeque<Obstacle>,
 }
-
-const OBSTACLE_GAP: f32 = 300.;
 
 impl Obstacles {
     pub fn new() -> Self {
@@ -176,15 +175,13 @@ async fn main() {
     let bg_color = color_u8!(139, 184, 232, 255);
     let mut bird = Bird::new();
     let mut obstacles = Obstacles::new();
-    let mut paused = true;
+    let mut paused = false;
     let mut can_pause = true;
-    let mut last_action = (None, now());
 
     loop {
         let fps = get_fps().to_string();
         clear_background(bg_color);
-        if let Some(action) = handle_input(last_action) {
-            last_action = (Some(action), now());
+        if let Some(action) = handle_input() {
             match action {
                 Action::Jump => bird.jump(),
                 Action::Pause => {
@@ -217,7 +214,7 @@ async fn main() {
     }
 }
 
-fn handle_input(last_action: (Option<Action>, f64)) -> Option<Action> {
+fn handle_input() -> Option<Action> {
     let keys = get_keys_down();
 
     if is_key_released(KeyCode::Escape) {
@@ -227,16 +224,7 @@ fn handle_input(last_action: (Option<Action>, f64)) -> Option<Action> {
     if keys.contains(&KeyCode::Space) || is_mouse_button_down(MouseButton::Left) {
         Some(Action::Jump)
     } else if keys.contains(&KeyCode::Escape) {
-        if last_action.0 != Some(Action::Pause) {
-            Some(Action::Pause)
-        } else {
-            let td = now() - last_action.1;
-            if td > 0.2 {
-                return Some(Action::Pause);
-            } else {
-                return None;
-            }
-        }
+        Some(Action::Pause)
     } else if keys.contains(&KeyCode::R) {
         Some(Action::Reset)
     } else {
