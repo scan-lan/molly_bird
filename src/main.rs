@@ -118,10 +118,31 @@ impl Obstacles {
     }
 }
 
+enum Action {
+    Jump,
+    Reset,
+    Pause,
+}
+
+fn handle_input() -> Option<Action> {
+    let keys = get_keys_down();
+
+    if keys.contains(&KeyCode::Space) || is_mouse_button_down(MouseButton::Left) {
+        Some(Action::Jump)
+    } else if keys.contains(&KeyCode::Escape) {
+        Some(Action::Pause)
+    } else if keys.contains(&KeyCode::R) {
+        Some(Action::Reset)
+    } else {
+        None
+    }
+}
+
 #[macroquad::main("Molly Bird")]
 async fn main() {
     let mut bird = Bird::new();
     let mut obstacles = Obstacles::new();
+    let mut paused = true;
 
     loop {
         let fps = get_fps().to_string();
@@ -129,12 +150,16 @@ async fn main() {
         draw_text("MOLLY BIRD!", 20.0, 20.0, 30.0, DARKGRAY);
         draw_text(&fps, screen_width() - 100., 20., 30., DARKGRAY);
 
-        if is_key_down(KeyCode::Space) || is_mouse_button_down(MouseButton::Left) {
-            bird.jump();
-        } else if is_key_down(KeyCode::R) {
-            bird.reset();
-            // obstacles.update()
-        };
+        if let Some(action) = handle_input() {
+            match action {
+                Action::Jump => bird.jump(),
+                Action::Pause => paused = !paused,
+                Action::Reset => {
+                    bird.reset();
+                    // obstacles.reset()
+                }
+            };
+        }
 
         bird.update();
         obstacles.update();
