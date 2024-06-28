@@ -131,7 +131,7 @@ async fn main() {
         clear_background(WHITE);
         draw_text("MOLLY BIRD!", 20.0, 20.0, 30.0, DARKGRAY);
 
-        if is_key_down(KeyCode::Space) {
+        if is_key_down(KeyCode::Space) || is_mouse_button_down(MouseButton::Left) {
             bird.jump();
         } else if is_key_down(KeyCode::R) {
             bird.reset();
