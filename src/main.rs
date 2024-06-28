@@ -10,13 +10,13 @@ const GAP_SIZE: f32 = CIRCUMFERENCE * 3.8;
 const OBSTACLE_WIDTH: f32 = CIRCUMFERENCE * 2.;
 const OBSTACLE_SPEED: f32 = 250.0;
 
+fn get_x_position() -> f32 {
+    screen_width() / 3.0
+}
+
 struct Bird {
     height: f32,
     velocity: f32,
-}
-
-fn get_x_position() -> f32 {
-    screen_width() / 3.0
 }
 
 impl Bird {
@@ -27,11 +27,16 @@ impl Bird {
         }
     }
 
-    pub fn draw(&self) {
+    pub fn tick(&mut self) {
+        self.update();
+        self.draw();
+    }
+
+    fn draw(&self) {
         draw_circle(get_x_position(), self.height, RADIUS, PURPLE);
     }
 
-    pub fn update(&mut self) {
+    fn update(&mut self) {
         self.height += self.velocity;
         self.velocity += get_frame_time() * GRAVITY;
 
@@ -95,11 +100,16 @@ impl Obstacles {
         Self { list: obstacles }
     }
 
-    pub fn draw(&self) {
+    pub fn tick(&mut self) {
+        self.update();
+        self.draw();
+    }
+
+    fn draw(&self) {
         self.list.iter().for_each(|obs| obs.draw())
     }
 
-    pub fn update(&mut self) {
+    fn update(&mut self) {
         if let Some(front) = self.list.front() {
             if front.x_offset <= -(screen_width() + OBSTACLE_WIDTH) {
                 self.list.pop_front();
