@@ -172,6 +172,7 @@ enum Action {
 
 #[macroquad::main("Molly Bird")]
 async fn main() {
+    let mut fps_hist = VecDeque::<i32>::new();
     let bg_color = color_u8!(139, 184, 232, 255);
     let mut bird = Bird::new();
     let mut obstacles = Obstacles::new();
@@ -179,7 +180,12 @@ async fn main() {
     let mut can_pause = true;
 
     loop {
-        let fps = get_fps().to_string();
+        if fps_hist.len() == 20 {
+            fps_hist.pop_front();
+        }
+        fps_hist.push_back(get_fps());
+        let fps: i32 = fps_hist.iter().sum::<i32>() / fps_hist.len() as i32;
+        let fps_str = fps.to_string();
         clear_background(bg_color);
         if let Some(action) = handle_input() {
             match action {
@@ -208,7 +214,7 @@ async fn main() {
         }
 
         draw_text("MOLLY BIRD!", 20.0, 25.0, 40.0, PINK);
-        draw_text(&fps, screen_width() - 100., 25., 40., PINK);
+        draw_text(&fps_str, screen_width() - 100., 25., 40., PINK);
 
         next_frame().await
     }
