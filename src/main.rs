@@ -79,10 +79,6 @@ impl Obstacle {
     pub fn update(&mut self) {
         self.x_offset -= get_frame_time() * OBSTACLE_SPEED;
     }
-
-    pub fn reset(&mut self) {
-        self.x_offset = 10.
-    }
 }
 
 struct Obstacles {
@@ -128,8 +124,10 @@ async fn main() {
     let mut obstacles = Obstacles::new();
 
     loop {
+        let fps = get_fps().to_string();
         clear_background(WHITE);
         draw_text("MOLLY BIRD!", 20.0, 20.0, 30.0, DARKGRAY);
+        draw_text(&fps, screen_width() - 100., 20., 30., DARKGRAY);
 
         if is_key_down(KeyCode::Space) || is_mouse_button_down(MouseButton::Left) {
             bird.jump();
