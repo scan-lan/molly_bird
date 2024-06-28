@@ -128,48 +128,6 @@ impl Obstacles {
     }
 }
 
-const PAUSE_SIGN_WIDTH: f32 = 100.;
-const PAUSE_SIGN_HEIGHT: f32 = PAUSE_SIGN_WIDTH * 3.;
-const PAUSE_SIGN_GAP: f32 = PAUSE_SIGN_WIDTH * 0.7;
-
-fn draw_pause_menu() {
-    let middle_screen_x = screen_width() / 2.;
-    let middle_screen_y = screen_height() / 2. - PAUSE_SIGN_HEIGHT / 2.;
-
-    // Draw background
-    draw_rectangle(
-        0.,
-        0.,
-        screen_width(),
-        screen_height(),
-        color_u8!(255, 255, 255, 100),
-    );
-
-    // Draw pause symbol
-    draw_rectangle(
-        middle_screen_x - PAUSE_SIGN_WIDTH - PAUSE_SIGN_GAP / 2.,
-        middle_screen_y,
-        PAUSE_SIGN_WIDTH,
-        PAUSE_SIGN_HEIGHT,
-        DARKGRAY,
-    );
-    draw_rectangle(
-        middle_screen_x + PAUSE_SIGN_GAP / 2.,
-        middle_screen_y,
-        PAUSE_SIGN_WIDTH,
-        PAUSE_SIGN_HEIGHT,
-        DARKGRAY,
-    );
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Action {
-    Jump,
-    Reset,
-    Pause,
-    PauseReleased,
-}
-
 #[macroquad::main("Molly Bird")]
 async fn main() {
     let mut fps_hist = VecDeque::<i32>::new();
@@ -214,10 +172,24 @@ async fn main() {
         }
 
         draw_text("MOLLY BIRD!", 20.0, 25.0, 40.0, PINK);
-        draw_text(&fps_str, screen_width() - 100., 25., 40., PINK);
+        draw_text(
+            &fps_str,
+            screen_width() - 60.,
+            screen_height() - 20.,
+            40.,
+            PINK,
+        );
 
         next_frame().await
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Action {
+    Jump,
+    Reset,
+    Pause,
+    PauseReleased,
 }
 
 fn handle_input() -> Option<Action> {
@@ -236,4 +208,38 @@ fn handle_input() -> Option<Action> {
     } else {
         None
     }
+}
+
+const PAUSE_SIGN_WIDTH: f32 = 100.;
+const PAUSE_SIGN_HEIGHT: f32 = PAUSE_SIGN_WIDTH * 3.;
+const PAUSE_SIGN_GAP: f32 = PAUSE_SIGN_WIDTH * 0.7;
+
+fn draw_pause_menu() {
+    let middle_screen_x = screen_width() / 2.;
+    let middle_screen_y = screen_height() / 2. - PAUSE_SIGN_HEIGHT / 2.;
+
+    // Draw background
+    draw_rectangle(
+        0.,
+        0.,
+        screen_width(),
+        screen_height(),
+        color_u8!(255, 255, 255, 100),
+    );
+
+    // Draw pause symbol
+    draw_rectangle(
+        middle_screen_x - PAUSE_SIGN_WIDTH - PAUSE_SIGN_GAP / 2.,
+        middle_screen_y,
+        PAUSE_SIGN_WIDTH,
+        PAUSE_SIGN_HEIGHT,
+        DARKGRAY,
+    );
+    draw_rectangle(
+        middle_screen_x + PAUSE_SIGN_GAP / 2.,
+        middle_screen_y,
+        PAUSE_SIGN_WIDTH,
+        PAUSE_SIGN_HEIGHT,
+        DARKGRAY,
+    );
 }
