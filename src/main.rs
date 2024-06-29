@@ -211,6 +211,7 @@ async fn main() {
     let mut obstacles = Obstacles::new();
     let mut paused = false;
     let mut can_pause = true;
+    let mut game_over = false;
 
     loop {
         if fps_hist.len() == 20 {
@@ -233,22 +234,24 @@ async fn main() {
                 Action::Reset => {
                     bird.reset();
                     obstacles.reset();
+                    game_over = false;
                 }
             };
         }
 
-        if !paused {
+        if !paused && !game_over {
             obstacles.tick();
             bird.tick();
 
             if bird.check_collisions(&obstacles).is_some() {
-                bird.reset();
-                obstacles.reset();
+                game_over = true;
             }
         } else {
             obstacles.draw();
             bird.draw();
-            draw_pause_menu();
+            if paused {
+                draw_pause_menu();
+            }
         }
 
         draw_text("MOLLY BIRD!", 20.0, 25.0, 40.0, PINK);
