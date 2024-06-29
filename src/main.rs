@@ -2,8 +2,11 @@ use std::collections::VecDeque;
 
 use macroquad::{prelude::*, rand};
 
-const GRAVITY: f32 = 20.;
-const RADIUS: f32 = 20.0;
+// const GAME_SPEED: f32 = 0.5;
+const GAME_SPEED: f32 = 1.0;
+const VELOCITY_CAP: f32 = 10.0;
+const GRAVITY: f32 = 20. * GAME_SPEED;
+const RADIUS: f32 = 25.0;
 const CIRCUMFERENCE: f32 = RADIUS * 2.;
 const JUMP_VELOCITY: f32 = -5.;
 
@@ -40,7 +43,12 @@ impl Bird {
 
     fn update(&mut self) {
         self.height += self.velocity;
-        self.velocity += get_frame_time() * GRAVITY;
+        let delta_v = get_frame_time() * GRAVITY;
+        if self.velocity + delta_v > VELOCITY_CAP {
+            self.velocity = VELOCITY_CAP;
+        } else {
+            self.velocity += delta_v;
+        }
 
         if self.height > screen_height() && self.velocity < 0. {
             self.reset();
@@ -101,6 +109,11 @@ fn check_circle_rect_collision(
     corner_distance_sq <= (RADIUS.powi(2))
 }
 
+const OBSTACLE_GAP: f32 = 380.;
+const GAP_SIZE: f32 = CIRCUMFERENCE * 3.8;
+const OBSTACLE_WIDTH: f32 = CIRCUMFERENCE * 2.;
+const OBSTACLE_SPEED: f32 = 250.0 * GAME_SPEED;
+
 struct Obstacle {
     x_offset: f32,
     x: f32,
@@ -133,11 +146,6 @@ impl Obstacle {
         self.x = screen_width() + self.x_offset;
     }
 }
-
-const OBSTACLE_GAP: f32 = 300.;
-const GAP_SIZE: f32 = CIRCUMFERENCE * 3.8;
-const OBSTACLE_WIDTH: f32 = CIRCUMFERENCE * 2.;
-const OBSTACLE_SPEED: f32 = 250.0;
 
 struct Obstacles {
     list: VecDeque<Obstacle>,
