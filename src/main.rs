@@ -64,7 +64,7 @@ impl Bird {
             return Some(Collision::Floor);
         }
 
-        obstacles.list.iter().find_map(|obstacle| {
+        obstacles.upcoming.iter().find_map(|obstacle| {
             let obstacle_top_height = obstacle.gap_height - OBSTACLE_GAP_HEIGHT / 2.;
             let obstacle_bottom_y = obstacle.gap_height + OBSTACLE_GAP_HEIGHT / 2.;
 
@@ -144,16 +144,16 @@ impl Obstacle {
         }
     }
 
-    pub fn draw(&self) {
+    pub fn draw(&self, color: Color) {
         let t_rect_h = self.gap_height - (OBSTACLE_GAP_HEIGHT / 2.0);
         // Top rectangle
-        draw_rectangle(self.x, 0.0, OBSTACLE_WIDTH, t_rect_h, DARKGRAY);
+        draw_rectangle(self.x, 0.0, OBSTACLE_WIDTH, t_rect_h, color);
 
         let b_rect_start = self.gap_height + OBSTACLE_GAP_HEIGHT / 2.0;
         let b_rect_h = screen_height() - (self.gap_height + OBSTACLE_GAP_HEIGHT / 2.0);
 
         // Bottom rectangle
-        draw_rectangle(self.x, b_rect_start, OBSTACLE_WIDTH, b_rect_h, DARKGRAY);
+        draw_rectangle(self.x, b_rect_start, OBSTACLE_WIDTH, b_rect_h, color);
     }
 
     pub fn update(&mut self) {
@@ -163,7 +163,8 @@ impl Obstacle {
 }
 
 struct Obstacles {
-    list: VecDeque<Obstacle>,
+    upcoming: VecDeque<Obstacle>,
+    passed: VecDeque<Obstacle>,
 }
 
 impl Obstacles {
@@ -171,12 +172,16 @@ impl Obstacles {
         let mut obstacles = VecDeque::new();
         obstacles.push_back(Obstacle::new());
 
-        Self { list: obstacles }
+        Self {
+            upcoming: obstacles,
+            passed: VecDeque::new(),
+        }
     }
 
     fn reset(&mut self) {
-        self.list.clear();
-        self.list.push_back(Obstacle::new());
+        self.passed.clear();
+        self.upcoming.clear();
+        self.upcoming.push_back(Obstacle::new());
     }
 
     pub fn tick(&mut self) {
@@ -185,25 +190,33 @@ impl Obstacles {
     }
 
     fn draw(&self) {
-        self.list.iter().for_each(|obs| obs.draw())
+        self.upcoming.iter().for_each(|obs| obs.draw(DARKGRAY));
+        self.passed.iter().for_each(|obs| obs.draw(LIGHTGRAY));
     }
 
     fn update(&mut self) {
-        if let Some(front) = self.list.front() {
-            if front.x_offset <= -(screen_width() + OBSTACLE_WIDTH) {
-                self.list.pop_front();
+        if let Some(front) = self.upcoming.front() {
+            let bird_x = get_x_position();
+
+            if front.x <= (bird_x - OBSTACLE_WIDTH - RADIUS) {
+                self.passed.push_back(
+                    self.upcoming
+                        .pop_front()
+                        .expect("There is always a front value at this point"),
+                );
             }
         }
 
-        if let Some(back) = self.list.back() {
+        if let Some(back) = self.upcoming.back() {
             if back.x_offset < -OBSTACLE_GAP_BETWEEN {
-                self.list.push_back(Obstacle::new())
+                self.upcoming.push_back(Obstacle::new())
             }
         } else {
-            self.list.push_back(Obstacle::new())
+            self.upcoming.push_back(Obstacle::new())
         }
 
-        self.list.iter_mut().for_each(|obs| obs.update())
+        self.upcoming.iter_mut().for_each(|obs| obs.update());
+        self.passed.iter_mut().for_each(|obs| obs.update());
     }
 }
 
