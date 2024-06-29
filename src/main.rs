@@ -60,6 +60,10 @@ impl Bird {
     }
 
     fn check_collisions(&self, obstacles: &Obstacles) -> Option<Collision> {
+        if self.height + RADIUS > screen_height() {
+            return Some(Collision::Floor);
+        }
+
         obstacles.list.iter().find_map(|obstacle| {
             let obstacle_top_height = obstacle.gap_height - OBSTACLE_GAP_HEIGHT / 2.;
             let obstacle_bottom_y = obstacle.gap_height + OBSTACLE_GAP_HEIGHT / 2.;
