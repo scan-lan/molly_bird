@@ -162,6 +162,10 @@ impl Obstacle {
     }
 }
 
+enum ObstacleEvent {
+    ObstaclePassed,
+}
+
 struct Obstacles {
     upcoming: VecDeque<Obstacle>,
     passed: VecDeque<Obstacle>,
@@ -184,9 +188,10 @@ impl Obstacles {
         self.upcoming.push_back(Obstacle::new());
     }
 
-    pub fn tick(&mut self) {
-        self.update();
+    pub fn tick(&mut self) -> Option<ObstacleEvent> {
+        let event = self.update();
         self.draw();
+        event
     }
 
     fn draw(&self) {
@@ -194,7 +199,9 @@ impl Obstacles {
         self.passed.iter().for_each(|obs| obs.draw(LIGHTGRAY));
     }
 
-    fn update(&mut self) {
+    fn update(&mut self) -> Option<ObstacleEvent> {
+        let mut obstacle_passed = false;
+
         if let Some(front) = self.upcoming.front() {
             let bird_x = get_x_position();
 
@@ -204,6 +211,7 @@ impl Obstacles {
                         .pop_front()
                         .expect("There is always a front value at this point"),
                 );
+                obstacle_passed = true;
             }
         }
 
@@ -217,6 +225,57 @@ impl Obstacles {
 
         self.upcoming.iter_mut().for_each(|obs| obs.update());
         self.passed.iter_mut().for_each(|obs| obs.update());
+
+        if obstacle_passed {
+            Some(ObstacleEvent::ObstaclePassed)
+        } else {
+            None
+        }
+    }
+}
+
+struct Score {
+    value: u32,
+}
+
+impl Score {
+    fn new() -> Self {
+        Score { value: 0 }
+    }
+
+    fn increment(&mut self) {
+        self.value += 1;
+    }
+
+    fn draw(&self) {
+        let t = self.value.to_string();
+        let font_size = 165;
+        let shadow_scale = 1.05;
+        let size = measure_text(&t, None, font_size, 1.0);
+        let right_padding = 20.0;
+
+        let text_x = screen_width() - size.width - right_padding;
+        let shadow_x = text_x + 5.;
+        let text_y = size.height + 20.;
+        let shadow_y = text_y + 8.;
+
+        let text_params = TextParams {
+            font_size,
+            color: WHITE,
+            ..Default::default()
+        };
+        let shadow_text_params = TextParams {
+            font_scale: shadow_scale,
+            color: BLACK,
+            ..text_params
+        };
+
+        draw_text_ex(&t, shadow_x, shadow_y, shadow_text_params);
+        draw_text_ex(&t, text_x, text_y, text_params);
+    }
+
+    fn reset(&mut self) {
+        self.value = 0;
     }
 }
 
@@ -226,6 +285,7 @@ async fn main() {
     let bg_color = color_u8!(139, 184, 232, 255);
     let mut bird = Bird::new();
     let mut obstacles = Obstacles::new();
+    let mut score = Score::new();
     let mut paused = false;
     let mut can_pause = true;
     let mut game_over = false;
@@ -238,6 +298,7 @@ async fn main() {
         let fps: i32 = fps_hist.iter().sum::<i32>() / fps_hist.len() as i32;
         let fps_str = fps.to_string();
         clear_background(bg_color);
+
         if let Some(action) = handle_input() {
             match action {
                 Action::Jump => bird.jump(),
@@ -251,13 +312,16 @@ async fn main() {
                 Action::Reset => {
                     bird.reset();
                     obstacles.reset();
+                    score.reset();
                     game_over = false;
                 }
             };
         }
 
         if !paused && !game_over {
-            obstacles.tick();
+            if obstacles.tick().is_some() {
+                score.increment();
+            }
             bird.tick();
 
             if bird.check_collisions(&obstacles).is_some() {
@@ -279,6 +343,7 @@ async fn main() {
             40.,
             PINK,
         );
+        score.draw();
 
         next_frame().await
     }
