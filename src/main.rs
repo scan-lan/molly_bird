@@ -102,6 +102,11 @@ impl Obstacles {
         Self { list: obstacles }
     }
 
+    fn reset(&mut self) {
+        self.list.clear();
+        self.list.push_back(Obstacle::new());
+    }
+
     pub fn tick(&mut self) {
         self.update();
         self.draw();
@@ -159,7 +164,7 @@ async fn main() {
                 Action::PauseReleased => can_pause = true,
                 Action::Reset => {
                     bird.reset();
-                    // obstacles.reset()
+                    obstacles.reset();
                 }
             };
         }
