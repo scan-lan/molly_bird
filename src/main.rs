@@ -61,8 +61,8 @@ impl Bird {
 
     fn check_collisions(&self, obstacles: &Obstacles) -> Option<Collision> {
         obstacles.list.iter().find_map(|obstacle| {
-            let obstacle_top_height = obstacle.gap_height - OBSTACLE_GAP / 2.;
-            // let obstacle_bottom_y = obstacle.gap_height + OBSTACLE_GAP / 2.;
+            let obstacle_top_height = obstacle.gap_height - OBSTACLE_GAP_HEIGHT / 2.;
+            // let obstacle_bottom_y = obstacle.gap_height + OBSTACLE_GAP_HEIGHT / 2.;
 
             // Check collision with top obstacle
             if check_circle_rect_collision(self.height, obstacle.x, 0., obstacle_top_height) {
@@ -109,8 +109,8 @@ fn check_circle_rect_collision(
     corner_distance_sq <= (RADIUS.powi(2))
 }
 
-const OBSTACLE_GAP: f32 = 380.;
-const GAP_SIZE: f32 = CIRCUMFERENCE * 3.8;
+const OBSTACLE_GAP_BETWEEN: f32 = 380.;
+const OBSTACLE_GAP_HEIGHT: f32 = CIRCUMFERENCE * 3.8;
 const OBSTACLE_WIDTH: f32 = CIRCUMFERENCE * 2.;
 const OBSTACLE_SPEED: f32 = 250.0 * GAME_SPEED;
 
@@ -125,17 +125,17 @@ impl Obstacle {
         Obstacle {
             x_offset: 10.,
             x: screen_width() + 10.,
-            gap_height: rand::gen_range(GAP_SIZE, screen_height() - GAP_SIZE),
+            gap_height: rand::gen_range(OBSTACLE_GAP_HEIGHT, screen_height() - OBSTACLE_GAP_HEIGHT),
         }
     }
 
     pub fn draw(&self) {
-        let t_rect_h = self.gap_height - (GAP_SIZE / 2.0);
+        let t_rect_h = self.gap_height - (OBSTACLE_GAP_HEIGHT / 2.0);
         // Top rectangle
         draw_rectangle(self.x, 0.0, OBSTACLE_WIDTH, t_rect_h, DARKGRAY);
 
-        let b_rect_start = self.gap_height + GAP_SIZE / 2.0;
-        let b_rect_h = screen_height() - (self.gap_height + GAP_SIZE / 2.0);
+        let b_rect_start = self.gap_height + OBSTACLE_GAP_HEIGHT / 2.0;
+        let b_rect_h = screen_height() - (self.gap_height + OBSTACLE_GAP_HEIGHT / 2.0);
 
         // Bottom rectangle
         draw_rectangle(self.x, b_rect_start, OBSTACLE_WIDTH, b_rect_h, DARKGRAY);
@@ -181,7 +181,7 @@ impl Obstacles {
         }
 
         if let Some(back) = self.list.back() {
-            if back.x_offset < -OBSTACLE_GAP {
+            if back.x_offset < -OBSTACLE_GAP_BETWEEN {
                 self.list.push_back(Obstacle::new())
             }
         } else {
