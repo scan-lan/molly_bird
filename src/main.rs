@@ -62,7 +62,7 @@ impl Bird {
     fn check_collisions(&self, obstacles: &Obstacles) -> Option<Collision> {
         obstacles.list.iter().find_map(|obstacle| {
             let obstacle_top_height = obstacle.gap_height - OBSTACLE_GAP_HEIGHT / 2.;
-            // let obstacle_bottom_y = obstacle.gap_height + OBSTACLE_GAP_HEIGHT / 2.;
+            let obstacle_bottom_y = obstacle.gap_height + OBSTACLE_GAP_HEIGHT / 2.;
 
             // Check collision with top obstacle
             if check_circle_rect_collision(self.height, obstacle.x, 0., obstacle_top_height) {
@@ -70,6 +70,15 @@ impl Bird {
             }
 
             // Check collision with bottom obstacle
+            if check_circle_rect_collision(
+                self.height,
+                obstacle.x,
+                obstacle_bottom_y,
+                screen_height(),
+            ) {
+                return Some(Collision::Obstacle);
+            }
+
             None
         })
     }
@@ -86,8 +95,10 @@ fn check_circle_rect_collision(
     rect_y: f32,
     rect_height: f32,
 ) -> bool {
-    let circle_dist_x = (get_x_position() - rect_x).abs();
-    let circle_dist_y = (circle_height - rect_y).abs();
+    let circle_x = get_x_position();
+
+    let circle_dist_x = (circle_x - (rect_x + OBSTACLE_WIDTH / 2.)).abs();
+    let circle_dist_y = (circle_height - (rect_y + rect_height / 2.)).abs();
 
     if circle_dist_x > (OBSTACLE_WIDTH / 2. + RADIUS) {
         return false;
