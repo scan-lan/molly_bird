@@ -11,6 +11,11 @@ fn get_x_position() -> f32 {
     screen_width() / 3.0
 }
 
+enum Collision {
+    Floor,
+    Obstacle,
+}
+
 struct Bird {
     height: f32,
     velocity: f32,
@@ -46,10 +51,54 @@ impl Bird {
         self.velocity = JUMP_VELOCITY;
     }
 
+    fn check_collisions(&self, obstacles: &Obstacles) -> Option<Collision> {
+        obstacles.list.iter().find_map(|obstacle| {
+            let obstacle_top_height = obstacle.gap_height - OBSTACLE_GAP / 2.;
+            // let obstacle_bottom_y = obstacle.gap_height + OBSTACLE_GAP / 2.;
+
+            // Check collision with top obstacle
+            if check_circle_rect_collision(self.height, obstacle.x, 0., obstacle_top_height) {
+                return Some(Collision::Obstacle);
+            }
+
+            // Check collision with bottom obstacle
+            None
+        })
+    }
+
     pub fn reset(&mut self) {
         self.height = screen_height() / 2.0;
         self.velocity = 0.0;
     }
+}
+
+fn check_circle_rect_collision(
+    circle_height: f32,
+    rect_x: f32,
+    rect_y: f32,
+    rect_height: f32,
+) -> bool {
+    let circle_dist_x = (get_x_position() - rect_x).abs();
+    let circle_dist_y = (circle_height - rect_y).abs();
+
+    if circle_dist_x > (OBSTACLE_WIDTH / 2. + RADIUS) {
+        return false;
+    }
+    if circle_dist_y > (rect_height / 2. + RADIUS) {
+        return false;
+    }
+
+    if circle_dist_x <= (OBSTACLE_WIDTH / 2.) {
+        return true;
+    }
+    if circle_dist_y <= (rect_height / 2.) {
+        return true;
+    }
+
+    let corner_distance_sq =
+        (circle_dist_x - OBSTACLE_WIDTH / 2.).powi(2) + (circle_dist_y - rect_height / 2.).powi(2);
+
+    corner_distance_sq <= (RADIUS.powi(2))
 }
 
 struct Obstacle {
@@ -172,6 +221,11 @@ async fn main() {
         if !paused {
             obstacles.tick();
             bird.tick();
+
+            if bird.check_collisions(&obstacles).is_some() {
+                bird.reset();
+                obstacles.reset();
+            }
         } else {
             obstacles.draw();
             bird.draw();
